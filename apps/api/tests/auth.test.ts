@@ -89,6 +89,21 @@ describe('POST /api/auth/login', () => {
     expect(extractRefreshCookie(res)).toBeTruthy();
   });
 
+  it('borra los refresh tokens vencidos del usuario al emitir uno nuevo', async () => {
+    const user = await registerUser(app);
+    const other = await registerUser(app, 'beto@example.com');
+    const expiredAt = new Date(Date.now() - 1000);
+    await prisma.refreshToken.updateMany({ data: { expiresAt: expiredAt } });
+
+    await request(app).post('/api/auth/login').send({ email: user.email, password: user.password });
+
+    const ownTokens = await prisma.refreshToken.findMany({ where: { userId: user.id } });
+    expect(ownTokens).toHaveLength(1);
+    expect(ownTokens[0]?.expiresAt.getTime()).toBeGreaterThan(Date.now());
+    // Solo se limpian los del usuario que inicia sesión.
+    expect(await prisma.refreshToken.count({ where: { userId: other.id } })).toBe(1);
+  });
+
   it.each([
     ['contraseña incorrecta', { email: 'ana@example.com', password: 'otra-clave-123' }],
     ['correo inexistente', { email: 'nadie@example.com', password: 'secreto-123' }],

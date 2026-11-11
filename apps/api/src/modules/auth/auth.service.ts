@@ -31,6 +31,9 @@ function hashRefreshToken(token: string): string {
 }
 
 async function issueRefreshToken(userId: string): Promise<string> {
+  // Limpieza oportunista: sin esto la tabla crecería con cada login y cada refresh.
+  await prisma.refreshToken.deleteMany({ where: { userId, expiresAt: { lt: new Date() } } });
+
   const token = randomBytes(REFRESH_TOKEN_BYTES).toString('base64url');
   await prisma.refreshToken.create({
     data: {
