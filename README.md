@@ -53,15 +53,15 @@ El seed crea un usuario de prueba con tres meses de movimientos:
 
 Todos se corren desde la raíz del repositorio.
 
-| Script               | Descripción                                            |
-| -------------------- | ------------------------------------------------------ |
-| `npm run dev`        | Levanta API y web en modo desarrollo                   |
-| `npm run build`      | Compila ambos proyectos                                |
-| `npm run lint`       | ESLint + Prettier + chequeo de tipos                   |
-| `npm run format`     | Formatea el código con Prettier                        |
-| `npm test`           | Corre los tests de API y web                           |
-| `npm run db:migrate` | Aplica las migraciones de Prisma y regenera el cliente |
-| `npm run db:seed`    | Recrea el usuario demo con datos de ejemplo            |
+| Script               | Descripción                                 |
+| -------------------- | ------------------------------------------- |
+| `npm run dev`        | Levanta API y web en modo desarrollo        |
+| `npm run build`      | Compila ambos proyectos                     |
+| `npm run lint`       | ESLint + Prettier + chequeo de tipos        |
+| `npm run format`     | Formatea el código con Prettier             |
+| `npm test`           | Corre los tests de API y web                |
+| `npm run db:migrate` | Aplica las migraciones de Prisma            |
+| `npm run db:seed`    | Recrea el usuario demo con datos de ejemplo |
 
 Cobertura de los services de la API: `npm run test:coverage -w @gestor-gastos/api`.
 
