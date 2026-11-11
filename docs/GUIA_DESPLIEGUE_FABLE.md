@@ -195,11 +195,13 @@ Escribilo en español, con pasos numerados y comandos copiables. Quien lo sigue 
 1. **Cuenta de Oracle Cloud.**
    - Pide tarjeta, solo para verificar identidad.
    - La **región de origen no se puede cambiar** y los recursos gratis solo existen ahí: elegir la más cercana a Costa Rica.
-2. **Política de VM inactiva (importante).** Oracle puede reclamar una instancia Always Free si durante 7 días tiene a la vez menos del 20 % de CPU (percentil 95), de red y de memoria (la memoria cuenta en las A1). Con 4 usuarios esta app estaría por debajo en las tres. Documentar las dos salidas:
-   - **Recomendada:** pasar la cuenta a _Pay As You Go_. Los recursos Always Free siguen sin costo y no se reclaman por inactividad. Crear en el mismo momento un **presupuesto con alerta a $1** para enterarse de cualquier cobro.
-   - **Sin tarjeta activa:** crear una VM más chica (1 OCPU, 3 GB) para que el uso real de memoria pase del 20 %, y revisarlo en las métricas de la consola. **No** usar scripts que generan carga falsa.
+2. **Pasar la cuenta a Pay As You Go (decisión tomada).** Oracle puede reclamar una instancia Always Free si durante 7 días tiene a la vez menos del 20 % de CPU (percentil 95), de red y de memoria. Con 4 usuarios esta app estaría por debajo en las tres. En una cuenta _Pay As You Go_ las instancias no se reclaman por inactividad, y los recursos Always Free siguen sin costo. Documentar:
+   - cómo hacer la mejora desde _Billing & Cost Management → Upgrade and Manage Payment_ (puede tardar desde unas horas hasta un día en aprobarse);
+   - crear **en ese mismo momento** un presupuesto (_Budgets_) de $1 con alerta por correo al 100 %;
+   - las reglas para mantener el costo en $0: crear solo recursos marcados _Always Free Eligible_, no pasar de 2 OCPU / 12 GB en total en A1 ni de 200 GB de disco, y revisar _Cost Analysis_ la primera semana;
+   - que **no** se usen scripts que generan carga falsa.
 3. **Crear la VM.**
-   - Shape `VM.Standard.A1.Flex`, imagen Ubuntu 24.04 (aarch64), IP pública, clave SSH propia.
+   - Shape `VM.Standard.A1.Flex` con **2 OCPU y 12 GB** (el máximo gratis), imagen Ubuntu 24.04 (aarch64), disco de arranque de 50 GB, IP pública, clave SSH propia.
    - Si sale "Out of capacity", probar otro dominio de disponibilidad o reintentar más tarde.
 4. **Abrir puertos 80 y 443**, en los dos lugares, porque es donde más gente se traba:
    - _Security List_ de la VCN: reglas de entrada TCP 80 y 443 desde `0.0.0.0/0`;

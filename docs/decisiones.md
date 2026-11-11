@@ -28,3 +28,4 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — La sesión del frontend es una query de TanStack Query (`useSession`) que se resuelve con `/auth/refresh` al cargar — deduplica la petición (el refresh token rota en cada uso) y evita un contexto de auth aparte.
 - 2026-11-11 — Rutas del frontend en español (`/login`, `/registro`, `/transacciones`, `/categorias`) — son texto visible para el usuario.
 - 2026-11-11 — Feedback de las acciones con un aviso temporal en la página, sin librería de _toasts_ — alcanza para el MVP.
+- 2026-11-11 — Despliegue en VM Always Free de Oracle con la cuenta en Pay As You Go y alerta de presupuesto de $1 — evita que Oracle reclame la VM por baja actividad; los recursos gratis siguen sin costo.
