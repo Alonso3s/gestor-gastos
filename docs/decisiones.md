@@ -20,3 +20,5 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — Rate limit de auth: 20 intentos por IP cada 15 minutos; desactivado con `NODE_ENV=test`. En tests bcrypt usa costo 4 (12 en el resto) para que la suite sea rápida.
 - 2026-11-11 — `validate` reemplaza `req.body/query/params` por los datos parseados y los controllers los leen con el tipo inferido de Zod.
 - 2026-11-11 — El tipo de una categoría no se puede editar (`PATCH` solo acepta `name` y `color`) — cambiarlo dejaría transacciones con un tipo distinto al de su categoría.
+- 2026-11-11 — `amount` se acepta como número o string decimal (hasta 10 enteros y 2 decimales) y siempre se responde como string — evita perder precisión con `number` de JS.
+- 2026-11-11 — Las transacciones incluyen `category: { id, name, color }` en la respuesta — la lista del frontend no necesita una segunda consulta para mostrar la categoría.
