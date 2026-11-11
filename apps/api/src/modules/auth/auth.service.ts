@@ -10,6 +10,7 @@ import type { LoginInput, RegisterInput, UserDto } from './auth.schemas.js';
 
 const REFRESH_TOKEN_BYTES = 48;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+export const REFRESH_REUSE_GRACE_MS = 10_000;
 
 export const REFRESH_TOKEN_TTL_MS = env.REFRESH_TOKEN_TTL_DAYS * MS_PER_DAY;
 
@@ -76,7 +77,8 @@ export async function login(input: LoginInput): Promise<Session> {
 
 /**
  * Rota el refresh token: revoca el recibido y emite una sesión nueva.
- * Si el token ya estaba revocado se asume robo y se revocan todos los del usuario.
+ * Si llega un token revocado hace más de `REFRESH_REUSE_GRACE_MS` se asume robo
+ * y se revocan todos los del usuario.
  */
 export async function refresh(refreshToken: string | undefined): Promise<Session> {
   const invalid = new AppError('UNAUTHORIZED', 'Sesión inválida o expirada');
@@ -94,7 +96,7 @@ export async function refresh(refreshToken: string | undefined): Promise<Session
     data: { revokedAt: new Date() },
   });
   if (count === 0) {
-    await revokeAllRefreshTokens(stored.userId);
+    if (!(await wasRevokedWithinGrace(stored.id))) await revokeAllRefreshTokens(stored.userId);
     throw invalid;
   }
   if (stored.expiresAt <= new Date()) throw invalid;
@@ -117,6 +119,16 @@ export async function getCurrentUser(userId: string): Promise<UserDto> {
   // El token puede seguir vigente aunque la cuenta ya no exista.
   if (!user) throw new AppError('UNAUTHORIZED', 'La cuenta ya no existe');
   return toUserDto(user);
+}
+
+/**
+ * Indica si el token se revocó hace instantes. Es el caso de dos pestañas que piden
+ * refresh casi a la vez con la misma cookie: la segunda no es un robo, solo llegó tarde.
+ */
+async function wasRevokedWithinGrace(tokenId: string): Promise<boolean> {
+  const token = await prisma.refreshToken.findUnique({ where: { id: tokenId } });
+  if (!token?.revokedAt) return false;
+  return Date.now() - token.revokedAt.getTime() < REFRESH_REUSE_GRACE_MS;
 }
 
 async function revokeAllRefreshTokens(userId: string): Promise<void> {

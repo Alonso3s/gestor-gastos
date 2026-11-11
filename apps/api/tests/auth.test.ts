@@ -2,6 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/lib/prisma.js';
+import { REFRESH_REUSE_GRACE_MS } from '../src/modules/auth/auth.service.js';
 import { DEFAULT_CATEGORIES } from '../src/modules/categories/defaultCategories.js';
 import { bearer, extractRefreshCookie, registerUser } from './helpers/auth.js';
 import { resetDatabaseBeforeEach } from './helpers/db.js';
@@ -113,9 +114,45 @@ describe('POST /api/auth/refresh', () => {
     expect(again.status).toBe(200);
   });
 
-  it('si llega un token ya usado, revoca todas las sesiones del usuario', async () => {
+  it('dos refresh simultáneos con la misma cookie no cierran la sesión', async () => {
+    const user = await registerUser(app);
+
+    const responses = await Promise.all([
+      request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie),
+      request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie),
+    ]);
+
+    expect(responses.map((res) => res.status).sort()).toEqual([200, 401]);
+    const winner = responses.find((res) => res.status === 200);
+    if (!winner) throw new Error('Ningún refresh respondió 200');
+
+    // El token emitido al ganador sigue vigente: la segunda pestaña no revocó todo.
+    const next = await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', extractRefreshCookie(winner));
+    expect(next.status).toBe(200);
+  });
+
+  it('un token reusado dentro del margen de gracia responde 401 sin revocar los demás', async () => {
     const user = await registerUser(app);
     const rotated = await request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie);
+
+    const reused = await request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie);
+    expect(reused.status).toBe(401);
+
+    const next = await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', extractRefreshCookie(rotated));
+    expect(next.status).toBe(200);
+  });
+
+  it('si llega un token usado fuera del margen de gracia, revoca todas las sesiones', async () => {
+    const user = await registerUser(app);
+    const rotated = await request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie);
+    await prisma.refreshToken.updateMany({
+      where: { revokedAt: { not: null } },
+      data: { revokedAt: new Date(Date.now() - REFRESH_REUSE_GRACE_MS - 1000) },
+    });
 
     const reused = await request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie);
     expect(reused.status).toBe(401);
