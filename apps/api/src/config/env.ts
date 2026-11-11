@@ -6,7 +6,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.url(),
   DATABASE_URL: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(16),
-  JWT_ACCESS_TTL: z.string().regex(/^\d+[smhd]$/, 'Formato esperado: 15m, 1h, 7d…'),
+  // Duración con unidad, p. ej. `15m`, `1h` o `7d`.
+  JWT_ACCESS_TTL: z.templateLiteral([z.int().positive(), z.enum(['s', 'm', 'h', 'd'])]),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
 });
 

@@ -1,6 +1,8 @@
 import bcrypt from 'bcrypt';
+import { env } from '../config/env.js';
 
-const BCRYPT_COST = 12;
+// En los tests se usa el costo mínimo para que la suite no tarde segundos por cada registro.
+const BCRYPT_COST = env.NODE_ENV === 'test' ? 4 : 12;
 
 export function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, BCRYPT_COST);

@@ -15,3 +15,7 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — `@prisma/adapter-pg` como dependencia adicional — Prisma 7 exige un _driver adapter_ para conectarse a PostgreSQL.
 - 2026-11-11 — El cliente de Prisma se genera en `apps/api/src/generated` (ignorado por git) y se regenera en `postinstall` — es código derivado del esquema.
 - 2026-11-11 — Usuario demo del seed: `demo@gastos.dev` / `demo1234`. El seed es idempotente: borra y recrea solo a ese usuario.
+- 2026-11-11 — `POST /auth/register` también setea la cookie de refresh (además de devolver el access token) — así el usuario queda con sesión iniciada tras registrarse, igual que con login.
+- 2026-11-11 — El refresh token se guarda como SHA-256 (no bcrypt) — es un valor aleatorio de 48 bytes, no una contraseña: un hash rápido es suficiente y permite buscarlo por índice único.
+- 2026-11-11 — Rate limit de auth: 20 intentos por IP cada 15 minutos; desactivado con `NODE_ENV=test`. En tests bcrypt usa costo 4 (12 en el resto) para que la suite sea rápida.
+- 2026-11-11 — `validate` reemplaza `req.body/query/params` por los datos parseados y los controllers los leen con el tipo inferido de Zod.
