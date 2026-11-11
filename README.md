@@ -36,7 +36,17 @@ npm run dev
 - API: http://localhost:3000/api
 - Docs API: http://localhost:3000/api/docs
 
-> Los scripts se crean en la fase 0 del plan de trabajo.
+## Scripts
+
+| Script               | Descripción                                |
+| -------------------- | ------------------------------------------ |
+| `npm run dev`        | Levanta API y web en modo desarrollo       |
+| `npm run build`      | Compila ambos proyectos                    |
+| `npm run lint`       | ESLint + Prettier + chequeo de tipos       |
+| `npm run format`     | Formatea el código con Prettier            |
+| `npm test`           | Corre los tests de API y web               |
+| `npm run db:migrate` | Aplica las migraciones de Prisma           |
+| `npm run db:seed`    | Carga el usuario demo con datos de ejemplo |
 
 ## Documentación
 
