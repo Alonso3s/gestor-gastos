@@ -6,3 +6,4 @@ Antes de cualquier tarea, leé `docs/GUIA_FABLE.md`. Es la especificación del p
 - Trabajá fase por fase según la sección 11 de la guía.
 - Corré `npm run lint` y `npm test` antes de cada commit.
 - Registrá supuestos y decisiones en `docs/decisiones.md`.
+- Para tareas de despliegue, seguí `docs/GUIA_DESPLIEGUE_FABLE.md`.
