@@ -65,6 +65,15 @@ describe('POST /api/auth/register', () => {
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('CONFLICT');
   });
+
+  it('ante registros simultáneos con el mismo correo crea uno solo y responde 409 al resto', async () => {
+    const responses = await Promise.all(
+      [1, 2, 3].map(() => request(app).post('/api/auth/register').send(validUser)),
+    );
+
+    expect(responses.map((res) => res.status).sort()).toEqual([201, 409, 409]);
+    expect(await prisma.user.count()).toBe(1);
+  });
 });
 
 describe('POST /api/auth/login', () => {

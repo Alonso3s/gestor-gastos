@@ -29,3 +29,4 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — Rutas del frontend en español (`/login`, `/registro`, `/transacciones`, `/categorias`) — son texto visible para el usuario.
 - 2026-11-11 — Feedback de las acciones con un aviso temporal en la página, sin librería de _toasts_ — alcanza para el MVP.
 - 2026-11-11 — A1: un refresh token reusado dentro de los 10 s posteriores a su rotación responde `401` sin revocar las demás sesiones — dos pestañas comparten la cookie y pueden pedir refresh casi a la vez; solo fuera de ese margen se trata como robo.
+- 2026-11-11 — A2: `register` ya no consulta el correo antes de crear; captura la violación del índice único y responde `409` — dos registros simultáneos con el mismo correo devolvían `500`.

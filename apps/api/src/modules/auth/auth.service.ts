@@ -5,6 +5,7 @@ import { AppError } from '../../lib/appError.js';
 import { signAccessToken } from '../../lib/jwt.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
 import { prisma } from '../../lib/prisma.js';
+import { isUniqueConstraintError } from '../../lib/prismaErrors.js';
 import { DEFAULT_CATEGORIES } from '../categories/defaultCategories.js';
 import type { LoginInput, RegisterInput, UserDto } from './auth.schemas.js';
 
@@ -51,18 +52,22 @@ async function createSession(user: User): Promise<Session> {
 
 /** Crea el usuario con sus categorías por defecto y abre una sesión. */
 export async function register(input: RegisterInput): Promise<Session> {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } });
-  if (existing) throw new AppError('CONFLICT', 'Ya existe una cuenta con ese correo');
-
-  const user = await prisma.user.create({
-    data: {
-      email: input.email,
-      name: input.name,
-      passwordHash: await hashPassword(input.password),
-      categories: { create: [...DEFAULT_CATEGORIES] },
-    },
-  });
-  return createSession(user);
+  const data = {
+    email: input.email,
+    name: input.name,
+    passwordHash: await hashPassword(input.password),
+    categories: { create: [...DEFAULT_CATEGORIES] },
+  };
+  try {
+    // Sin consulta previa: el índice único es lo que garantiza un solo usuario por correo
+    // cuando llegan dos registros iguales a la vez.
+    return await createSession(await prisma.user.create({ data }));
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      throw new AppError('CONFLICT', 'Ya existe una cuenta con ese correo');
+    }
+    throw error;
+  }
 }
 
 /** Abre una sesión si las credenciales son correctas. */
