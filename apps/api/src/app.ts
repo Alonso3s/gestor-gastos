@@ -7,6 +7,7 @@ import { requestLogger } from './middlewares/requestLogger.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { categoriesRouter } from './modules/categories/categories.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
+import { reportsRouter } from './modules/reports/reports.routes.js';
 import { transactionsRouter } from './modules/transactions/transactions.routes.js';
 
 function createApiRouter(): Router {
@@ -15,6 +16,7 @@ function createApiRouter(): Router {
   api.use('/auth', authRouter);
   api.use('/categories', categoriesRouter);
   api.use('/transactions', transactionsRouter);
+  api.use('/reports', reportsRouter);
   return api;
 }
 
