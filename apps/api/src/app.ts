@@ -5,12 +5,14 @@ import { env } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { requestLogger } from './middlewares/requestLogger.js';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { categoriesRouter } from './modules/categories/categories.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 
 function createApiRouter(): Router {
   const api = Router();
   api.use('/health', healthRouter);
   api.use('/auth', authRouter);
+  api.use('/categories', categoriesRouter);
   return api;
 }
 
