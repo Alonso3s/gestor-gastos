@@ -12,6 +12,7 @@ export default defineConfig({
   test: {
     env: { NODE_ENV: 'test', DATABASE_URL: testDatabaseUrl },
     include: ['tests/**/*.test.ts'],
+    globalSetup: ['tests/helpers/globalSetup.ts'],
     // Todos los tests comparten una misma base de datos: no pueden correr en paralelo.
     fileParallelism: false,
     coverage: { include: ['src/modules/**/*.service.ts'] },

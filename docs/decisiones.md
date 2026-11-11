@@ -12,3 +12,6 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — Los tests usan `.env` y, si no existe, `.env.example` — permite correr `npm test` en un clon recién hecho con solo levantar Docker Compose.
 - 2026-11-11 — Log de peticiones con un middleware propio sobre `pino` en vez de `pino-http` — son 15 líneas y evita otra dependencia.
 - 2026-11-11 — `docker/init-test-db.sql` crea la base `gastos_test` al inicializar el contenedor — los tests de integración necesitan una base separada de la de desarrollo.
+- 2026-11-11 — `@prisma/adapter-pg` como dependencia adicional — Prisma 7 exige un _driver adapter_ para conectarse a PostgreSQL.
+- 2026-11-11 — El cliente de Prisma se genera en `apps/api/src/generated` (ignorado por git) y se regenera en `postinstall` — es código derivado del esquema.
+- 2026-11-11 — Usuario demo del seed: `demo@gastos.dev` / `demo1234`. El seed es idempotente: borra y recrea solo a ese usuario.
