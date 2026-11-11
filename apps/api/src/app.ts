@@ -2,6 +2,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Router, type Express } from 'express';
 import { env } from './config/env.js';
+import { docsRouter } from './docs/docs.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { requestLogger } from './middlewares/requestLogger.js';
 import { authRouter } from './modules/auth/auth.routes.js';
@@ -17,6 +18,7 @@ function createApiRouter(): Router {
   api.use('/categories', categoriesRouter);
   api.use('/transactions', transactionsRouter);
   api.use('/reports', reportsRouter);
+  api.use('/docs', docsRouter);
   return api;
 }
 

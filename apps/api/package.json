@@ -12,9 +12,11 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "9.1.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "bcrypt": "6.0.0",
@@ -24,6 +26,7 @@
     "express-rate-limit": "8.7.4",
     "jsonwebtoken": "9.0.3",
     "pino": "10.4.0",
+    "swagger-ui-express": "5.0.1",
     "zod": "4.6.7"
   },
   "devDependencies": {
@@ -34,6 +37,7 @@
     "@types/jsonwebtoken": "9.0.10",
     "@types/node": "22.20.5",
     "@types/supertest": "7.2.1",
+    "@types/swagger-ui-express": "4.1.8",
     "@vitest/coverage-v8": "5.1.0",
     "prisma": "7.10.1",
     "supertest": "7.3.2",
