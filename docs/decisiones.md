@@ -34,3 +34,4 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — A4: nueva variable `TRUST_PROXY` (saltos de proxy, `0` por defecto, `1` en producción) aplicada con `app.set("trust proxy")`; el log de peticiones ahora incluye la IP — detrás de Caddy todos los usuarios compartían la IP del proxy y, con ella, el rate limit.
 - 2026-11-11 — A5: `npm start` usa `--env-file-if-exists` y `prisma.config.ts` carga `.env` solo si existe, sin recurrir a `.env.example` cuando `NODE_ENV=production` — en Docker las variables llegan del entorno y no hay archivos `.env`.
 - 2026-11-11 — A6: en producción el frontend se compila con `VITE_API_URL=/api` y `CORS_ORIGIN` vale `https://<dominio>` — web y API comparten dominio porque la cookie de refresh es `sameSite=strict`. No requirió cambios en el cliente HTTP.
+- 2026-11-11 — A7: `/api/health` ejecuta `SELECT 1` y responde `503 { status: "error" }` si la base no contesta — Docker Compose lo usa como healthcheck de la API.
