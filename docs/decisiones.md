@@ -32,3 +32,4 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — A2: `register` ya no consulta el correo antes de crear; captura la violación del índice único y responde `409` — dos registros simultáneos con el mismo correo devolvían `500`.
 - 2026-11-11 — A3: al emitir un refresh token se borran los ya vencidos de ese usuario — evita que la tabla `RefreshToken` crezca sin límite, sin necesidad de un job aparte.
 - 2026-11-11 — A4: nueva variable `TRUST_PROXY` (saltos de proxy, `0` por defecto, `1` en producción) aplicada con `app.set("trust proxy")`; el log de peticiones ahora incluye la IP — detrás de Caddy todos los usuarios compartían la IP del proxy y, con ella, el rate limit.
+- 2026-11-11 — A5: `npm start` usa `--env-file-if-exists` y `prisma.config.ts` carga `.env` solo si existe, sin recurrir a `.env.example` cuando `NODE_ENV=production` — en Docker las variables llegan del entorno y no hay archivos `.env`.
