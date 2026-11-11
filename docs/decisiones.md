@@ -24,3 +24,7 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — Las transacciones incluyen `category: { id, name, color }` en la respuesta — la lista del frontend no necesita una segunda consulta para mostrar la categoría.
 - 2026-11-11 — En el reporte, `pct` por categoría se redondea a 1 decimal y `expenseChangePct` a 2, como en el ejemplo de la guía; `byCategory` va ordenado de mayor a menor gasto.
 - 2026-11-11 — La documentación OpenAPI se registra en un `*.openapi.ts` por módulo, con los mismos esquemas Zod que validan la API; los ejemplos van a nivel de endpoint. El JSON crudo queda en `/api/docs/openapi.json`.
+- 2026-11-11 — El frontend define sus propios tipos de respuesta y esquemas de formulario en vez de importar los del backend — compartirlos exigiría un tercer paquete en el monorepo, fuera de la estructura de la guía.
+- 2026-11-11 — La sesión del frontend es una query de TanStack Query (`useSession`) que se resuelve con `/auth/refresh` al cargar — deduplica la petición (el refresh token rota en cada uso) y evita un contexto de auth aparte.
+- 2026-11-11 — Rutas del frontend en español (`/login`, `/registro`, `/transacciones`, `/categorias`) — son texto visible para el usuario.
+- 2026-11-11 — Feedback de las acciones con un aviso temporal en la página, sin librería de _toasts_ — alcanza para el MVP.
