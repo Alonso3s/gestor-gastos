@@ -8,6 +8,7 @@ export const requestLogger: RequestHandler = (req, res, next) => {
       {
         method: req.method,
         url: req.originalUrl,
+        ip: req.ip,
         status: res.statusCode,
         durationMs: Math.round(performance.now() - startedAt),
       },

@@ -31,3 +31,4 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — A1: un refresh token reusado dentro de los 10 s posteriores a su rotación responde `401` sin revocar las demás sesiones — dos pestañas comparten la cookie y pueden pedir refresh casi a la vez; solo fuera de ese margen se trata como robo.
 - 2026-11-11 — A2: `register` ya no consulta el correo antes de crear; captura la violación del índice único y responde `409` — dos registros simultáneos con el mismo correo devolvían `500`.
 - 2026-11-11 — A3: al emitir un refresh token se borran los ya vencidos de ese usuario — evita que la tabla `RefreshToken` crezca sin límite, sin necesidad de un job aparte.
+- 2026-11-11 — A4: nueva variable `TRUST_PROXY` (saltos de proxy, `0` por defecto, `1` en producción) aplicada con `app.set("trust proxy")`; el log de peticiones ahora incluye la IP — detrás de Caddy todos los usuarios compartían la IP del proxy y, con ella, el rate limit.

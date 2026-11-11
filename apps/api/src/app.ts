@@ -27,6 +27,8 @@ export function createApp(): Express {
   const app = express();
 
   app.disable('x-powered-by');
+  // Detrás de un proxy, `req.ip` sale de `X-Forwarded-For`; si no, el rate limit vería a todos con la misma IP.
+  app.set('trust proxy', env.TRUST_PROXY);
   // `credentials` permite que el navegador envíe la cookie del refresh token.
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
