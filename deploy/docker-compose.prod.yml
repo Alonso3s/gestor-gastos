@@ -1,0 +1,101 @@
+# Uso (desde la raíz del repo): docker compose -f deploy/docker-compose.prod.yml up -d --build
+# Las variables se leen de deploy/.env (copiar desde deploy/.env.prod.example).
+name: gestor-gastos
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+x-database-url: &database-url postgresql://${POSTGRES_USER:?falta POSTGRES_USER}:${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:?falta POSTGRES_DB}
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging: *logging
+
+  # Aplica las migraciones pendientes y termina; la API espera a que salga bien.
+  migrate:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+      target: build
+    working_dir: /app/apps/api
+    command: ['npx', 'prisma', 'migrate', 'deploy']
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: *database-url
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+    logging: *logging
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      TRUST_PROXY: 1
+      DATABASE_URL: *database-url
+      CORS_ORIGIN: https://${DOMAIN:?falta DOMAIN}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?falta JWT_ACCESS_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-7}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging: *logging
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      # Guardan el certificado HTTPS para no pedirlo de nuevo en cada reinicio.
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    logging: *logging
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

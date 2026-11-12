@@ -1,0 +1,33 @@
+# Se construye desde la raíz del repo: docker compose -f deploy/docker-compose.prod.yml build
+# Debian (glibc) y no Alpine: bcrypt trae binarios precompilados para glibc en x64 y arm64.
+
+FROM node:22-bookworm-slim AS build
+# El CLI de Prisma (generate y migrate deploy) necesita OpenSSL.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+# `prisma generate` (postinstall) evalúa prisma.config.ts, que exige una URL aunque no se conecte.
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY apps/api/prisma apps/api/prisma
+COPY apps/api/prisma.config.ts apps/api/
+RUN npm ci
+COPY tsconfig.base.json ./
+COPY apps/api apps/api
+RUN npm run build -w @gestor-gastos/api
+
+FROM node:22-bookworm-slim AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+# Sin scripts: el cliente de Prisma ya viene compilado dentro de dist/.
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+COPY --from=build /app/apps/api/dist apps/api/dist
+WORKDIR /app/apps/api
+USER node
+EXPOSE 3000
+CMD ["node", "dist/server.js"]

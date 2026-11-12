@@ -10,3 +10,4 @@ coverage/
 .vscode/
 .idea/
 apps/api/src/generated/
+!deploy/.env.prod.example
