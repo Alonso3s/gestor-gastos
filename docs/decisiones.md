@@ -29,3 +29,10 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — Rutas del frontend en español (`/login`, `/registro`, `/transacciones`, `/categorias`) — son texto visible para el usuario.
 - 2026-11-11 — Feedback de las acciones con un aviso temporal en la página, sin librería de _toasts_ — alcanza para el MVP.
 - 2026-11-11 — Despliegue en VM Always Free de Oracle con la cuenta en Pay As You Go y alerta de presupuesto de $1 — evita que Oracle reclame la VM por baja actividad; los recursos gratis siguen sin costo.
+- 2026-11-11 — Margen de 10 s antes de tratar como robo un refresh token reusado — varias pestañas comparten la cookie y pueden rotarla casi a la vez.
+- 2026-11-11 — Registro sin búsqueda previa del correo; el índice único decide y se responde 409 — elimina la carrera que devolvía 500.
+- 2026-11-11 — Se borran los refresh tokens vencidos del usuario al emitir uno nuevo — evita que la tabla crezca sin límite, sin agregar un cron.
+- 2026-11-11 — `TRUST_PROXY` configurable (0 por defecto, 1 en producción detrás de Caddy) — el rate limit necesita la IP real del cliente.
+- 2026-11-11 — La API y Prisma arrancan sin archivo `.env` en producción — en Docker las variables llegan por el entorno.
+- 2026-11-11 — El frontend se compila con `VITE_API_URL=/api` y se sirve en el mismo dominio que la API — la cookie `sameSite=strict` no viaja entre dominios.
+- 2026-11-11 — `/api/health` consulta la base y responde 503 si falla — Docker lo usa como healthcheck.
