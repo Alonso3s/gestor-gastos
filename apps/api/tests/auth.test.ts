@@ -64,6 +64,15 @@ describe('POST /api/auth/register', () => {
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('CONFLICT');
   });
+
+  it('con registros simultáneos del mismo correo crea uno solo y el resto recibe 409', async () => {
+    const responses = await Promise.all(
+      Array.from({ length: 3 }, () => request(app).post('/api/auth/register').send(validUser)),
+    );
+
+    expect(responses.map((res) => res.status).sort()).toEqual([201, 409, 409]);
+    expect(await prisma.user.count()).toBe(1);
+  });
 });
 
 describe('POST /api/auth/login', () => {
@@ -113,9 +122,13 @@ describe('POST /api/auth/refresh', () => {
     expect(again.status).toBe(200);
   });
 
-  it('si llega un token ya usado, revoca todas las sesiones del usuario', async () => {
+  it('si llega un token usado hace tiempo, revoca todas las sesiones del usuario', async () => {
     const user = await registerUser(app);
     const rotated = await request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie);
+    await prisma.refreshToken.updateMany({
+      where: { userId: user.id, revokedAt: { not: null } },
+      data: { revokedAt: new Date(Date.now() - 60_000) },
+    });
 
     const reused = await request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie);
     expect(reused.status).toBe(401);
@@ -128,6 +141,47 @@ describe('POST /api/auth/refresh', () => {
 
     const active = await prisma.refreshToken.count({ where: { userId: user.id, revokedAt: null } });
     expect(active).toBe(0);
+  });
+
+  it('dos refresh simultáneos con el mismo token no cierran la sesión', async () => {
+    const user = await registerUser(app);
+
+    const responses = await Promise.all([
+      request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie),
+      request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie),
+    ]);
+    const winner = responses.find((res) => res.status === 200);
+    if (!winner) throw new Error('Ningún refresh respondió 200');
+
+    expect(responses.map((res) => res.status).sort()).toEqual([200, 401]);
+    const next = await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', extractRefreshCookie(winner));
+    expect(next.status).toBe(200);
+  });
+
+  it('un token recién rotado reenviado no revoca las demás sesiones', async () => {
+    const user = await registerUser(app);
+    const rotated = await request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie);
+
+    const reused = await request(app).post('/api/auth/refresh').set('Cookie', user.refreshCookie);
+    const next = await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', extractRefreshCookie(rotated));
+
+    expect(reused.status).toBe(401);
+    expect(next.status).toBe(200);
+  });
+
+  it('al abrir una sesión borra los refresh tokens vencidos del usuario', async () => {
+    const user = await registerUser(app);
+    await prisma.refreshToken.updateMany({ data: { expiresAt: new Date(Date.now() - 1000) } });
+
+    await request(app).post('/api/auth/login').send({ email: user.email, password: user.password });
+
+    const tokens = await prisma.refreshToken.findMany({ where: { userId: user.id } });
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0]?.expiresAt.getTime()).toBeGreaterThan(Date.now());
   });
 
   it('responde 401 sin cookie o con un token desconocido', async () => {

@@ -5,11 +5,14 @@ import { AppError } from '../../lib/appError.js';
 import { signAccessToken } from '../../lib/jwt.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
 import { prisma } from '../../lib/prisma.js';
+import { isUniqueConstraintError } from '../../lib/prismaErrors.js';
 import { DEFAULT_CATEGORIES } from '../categories/defaultCategories.js';
 import type { LoginInput, RegisterInput, UserDto } from './auth.schemas.js';
 
 const REFRESH_TOKEN_BYTES = 48;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+// Varias pestañas comparten la cookie y pueden pedir refresh casi a la vez con el mismo token.
+const REFRESH_REUSE_GRACE_MS = 10_000;
 
 export const REFRESH_TOKEN_TTL_MS = env.REFRESH_TOKEN_TTL_DAYS * MS_PER_DAY;
 
@@ -29,6 +32,7 @@ function hashRefreshToken(token: string): string {
 }
 
 async function issueRefreshToken(userId: string): Promise<string> {
+  await prisma.refreshToken.deleteMany({ where: { userId, expiresAt: { lt: new Date() } } });
   const token = randomBytes(REFRESH_TOKEN_BYTES).toString('base64url');
   await prisma.refreshToken.create({
     data: {
@@ -50,18 +54,24 @@ async function createSession(user: User): Promise<Session> {
 
 /** Crea el usuario con sus categorías por defecto y abre una sesión. */
 export async function register(input: RegisterInput): Promise<Session> {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } });
-  if (existing) throw new AppError('CONFLICT', 'Ya existe una cuenta con ese correo');
-
-  const user = await prisma.user.create({
-    data: {
-      email: input.email,
-      name: input.name,
-      passwordHash: await hashPassword(input.password),
-      categories: { create: [...DEFAULT_CATEGORIES] },
-    },
-  });
-  return createSession(user);
+  const passwordHash = await hashPassword(input.password);
+  try {
+    const user = await prisma.user.create({
+      data: {
+        email: input.email,
+        name: input.name,
+        passwordHash,
+        categories: { create: [...DEFAULT_CATEGORIES] },
+      },
+    });
+    return await createSession(user);
+  } catch (error) {
+    // El índice único resuelve la carrera de dos registros simultáneos con el mismo correo.
+    if (isUniqueConstraintError(error)) {
+      throw new AppError('CONFLICT', 'Ya existe una cuenta con ese correo');
+    }
+    throw error;
+  }
 }
 
 /** Abre una sesión si las credenciales son correctas. */
@@ -76,7 +86,8 @@ export async function login(input: LoginInput): Promise<Session> {
 
 /**
  * Rota el refresh token: revoca el recibido y emite una sesión nueva.
- * Si el token ya estaba revocado se asume robo y se revocan todos los del usuario.
+ * Si el token ya estaba revocado se asume robo y se revocan todos los del usuario,
+ * salvo que se haya revocado hace muy poco (otra pestaña rotándolo al mismo tiempo).
  */
 export async function refresh(refreshToken: string | undefined): Promise<Session> {
   const invalid = new AppError('UNAUTHORIZED', 'Sesión inválida o expirada');
@@ -94,7 +105,7 @@ export async function refresh(refreshToken: string | undefined): Promise<Session
     data: { revokedAt: new Date() },
   });
   if (count === 0) {
-    await revokeAllRefreshTokens(stored.userId);
+    if (!isRecentlyRevoked(stored.revokedAt)) await revokeAllRefreshTokens(stored.userId);
     throw invalid;
   }
   if (stored.expiresAt <= new Date()) throw invalid;
@@ -117,6 +128,11 @@ export async function getCurrentUser(userId: string): Promise<UserDto> {
   // El token puede seguir vigente aunque la cuenta ya no exista.
   if (!user) throw new AppError('UNAUTHORIZED', 'La cuenta ya no existe');
   return toUserDto(user);
+}
+
+// `null` significa que otra petición lo revocó entre la lectura y el `updateMany`: fue hace instantes.
+function isRecentlyRevoked(revokedAt: Date | null): boolean {
+  return revokedAt === null || Date.now() - revokedAt.getTime() < REFRESH_REUSE_GRACE_MS;
 }
 
 async function revokeAllRefreshTokens(userId: string): Promise<void> {
