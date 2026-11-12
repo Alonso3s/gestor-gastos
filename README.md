@@ -81,6 +81,7 @@ Se definen en un único `.env` en la raíz (ver [`.env.example`](.env.example)).
 | `JWT_ACCESS_SECRET`      | Secreto para firmar el access token (mínimo 16 caracteres) | valor largo y aleatorio                                 |
 | `JWT_ACCESS_TTL`         | Duración del access token (`15m`, `1h`, …)                 | `15m`                                                   |
 | `REFRESH_TOKEN_TTL_DAYS` | Días de vida del refresh token                             | `7`                                                     |
+| `TRUST_PROXY`            | Proxies delante de la API (`1` detrás de Caddy)            | `0`                                                     |
 | `VITE_API_URL`           | URL de la API que usa el frontend                          | `http://localhost:3000/api`                             |
 
 Para producción generá un secreto propio, por ejemplo con `openssl rand -base64 48`.
@@ -114,6 +115,15 @@ Errores con formato único:
 { "error": { "code": "VALIDATION_ERROR", "message": "Descripción legible", "details": [] } }
 ```
 
+## Despliegue
+
+Producción corre en una VM de Oracle Cloud con Docker Compose: Caddy (HTTPS automático y frontend) delante de la API y PostgreSQL. Los archivos están en [`deploy/`](deploy/) y el paso a paso en [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
+
+```bash
+cp deploy/.env.prod.example deploy/.env   # completar dominio y secretos
+docker compose -f deploy/docker-compose.prod.yml up -d --build
+```
+
 ## Estructura
 
 ```
@@ -142,3 +152,4 @@ Cada módulo de la API sigue la cadena `routes → controller → service → Pr
 
 - [Guía de desarrollo](docs/GUIA_FABLE.md): especificación, convenciones y plan por fases.
 - [Registro de decisiones](docs/decisiones.md): supuestos y decisiones tomadas durante el desarrollo.
+- [Despliegue](docs/DESPLIEGUE.md): servidor, dominio, respaldos y actualizaciones.
