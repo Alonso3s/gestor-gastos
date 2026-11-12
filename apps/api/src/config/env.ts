@@ -9,6 +9,8 @@ const envSchema = z.object({
   // Duración con unidad, p. ej. `15m`, `1h` o `7d`.
   JWT_ACCESS_TTL: z.templateLiteral([z.int().positive(), z.enum(['s', 'm', 'h', 'd'])]),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  // Cantidad de proxies delante de la API (Caddy en producción) para leer la IP real del cliente.
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });
 
 export type Env = z.infer<typeof envSchema>;

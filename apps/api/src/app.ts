@@ -27,6 +27,7 @@ export function createApp(): Express {
   const app = express();
 
   app.disable('x-powered-by');
+  app.set('trust proxy', env.TRUST_PROXY);
   // `credentials` permite que el navegador envíe la cookie del refresh token.
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
