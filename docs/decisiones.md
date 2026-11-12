@@ -36,3 +36,4 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — La API y Prisma arrancan sin archivo `.env` en producción — en Docker las variables llegan por el entorno.
 - 2026-11-11 — El frontend se compila con `VITE_API_URL=/api` y se sirve en el mismo dominio que la API — la cookie `sameSite=strict` no viaja entre dominios.
 - 2026-11-11 — `/api/health` consulta la base y responde 503 si falla — Docker lo usa como healthcheck.
+- 2026-11-11 — El generador de Prisma declara `moduleFormat` e `importFileExtension` — sin tsconfig a la vista (Docker) generaba imports `.ts` y la API no arrancaba.
