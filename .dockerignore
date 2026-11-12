@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/dist
+**/coverage
+apps/api/src/generated
+.env
+.env.*
+deploy/.env
+docs
+*.md

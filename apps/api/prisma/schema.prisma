@@ -1,6 +1,8 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  // Fijo en `js` para que no dependa de que haya un tsconfig a la vista al generar (build de Docker).
+  importFileExtension = "js"
 }
 
 datasource db {
