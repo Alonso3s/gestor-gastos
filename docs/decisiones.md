@@ -35,3 +35,8 @@ Formato: fecha — decisión — motivo.
 - 2026-11-11 — A5: `npm start` usa `--env-file-if-exists` y `prisma.config.ts` carga `.env` solo si existe, sin recurrir a `.env.example` cuando `NODE_ENV=production` — en Docker las variables llegan del entorno y no hay archivos `.env`.
 - 2026-11-11 — A6: en producción el frontend se compila con `VITE_API_URL=/api` y `CORS_ORIGIN` vale `https://<dominio>` — web y API comparten dominio porque la cookie de refresh es `sameSite=strict`. No requirió cambios en el cliente HTTP.
 - 2026-11-11 — A7: `/api/health` ejecuta `SELECT 1` y responde `503 { status: "error" }` si la base no contesta — Docker Compose lo usa como healthcheck de la API.
+- 2026-11-12 — Fase B: `importFileExtension = "js"` fijo en el generador de Prisma — dentro del build de Docker el cliente se genera antes de copiar el `tsconfig`, Prisma elegía importaciones `.ts` y la API compilada no arrancaba.
+- 2026-11-12 — Fase B: se agrega un `.dockerignore` en la raíz (no listado en la guía) — evita mandar `node_modules`, `dist` y los `.env` al contexto de build.
+- 2026-11-12 — Fase B: el healthcheck de la API en Compose usa `fetch` de Node — la imagen `node:22-bookworm-slim` no trae `curl` ni `wget` y no vale la pena instalarlos.
+- 2026-11-12 — Fase B: `backup.sh` lee usuario y base de las variables del propio contenedor `db` — no hace falta interpretar `deploy/.env` desde el script.
+- 2026-11-12 — Fase B: la etapa `build` de la API instala `openssl` — es lo que Prisma recomienda para que el motor de migraciones detecte la versión correcta en imágenes `slim`.

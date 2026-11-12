@@ -71,19 +71,40 @@ Los tests de la API son de integración: usan la base `DATABASE_URL_TEST`, aplic
 
 Se definen en un único `.env` en la raíz (ver [`.env.example`](.env.example)).
 
-| Variable                 | Descripción                                                | Ejemplo                                                 |
-| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------- |
-| `NODE_ENV`               | `development`, `test` o `production`                       | `development`                                           |
-| `PORT`                   | Puerto de la API                                           | `3000`                                                  |
-| `CORS_ORIGIN`            | Origen del frontend autorizado a llamar a la API           | `http://localhost:5173`                                 |
-| `DATABASE_URL`           | Conexión a PostgreSQL                                      | `postgresql://gastos:gastos@localhost:5432/gastos`      |
-| `DATABASE_URL_TEST`      | Base usada por los tests                                   | `postgresql://gastos:gastos@localhost:5432/gastos_test` |
-| `JWT_ACCESS_SECRET`      | Secreto para firmar el access token (mínimo 16 caracteres) | valor largo y aleatorio                                 |
-| `JWT_ACCESS_TTL`         | Duración del access token (`15m`, `1h`, …)                 | `15m`                                                   |
-| `REFRESH_TOKEN_TTL_DAYS` | Días de vida del refresh token                             | `7`                                                     |
-| `VITE_API_URL`           | URL de la API que usa el frontend                          | `http://localhost:3000/api`                             |
+| Variable                 | Descripción                                                               | Ejemplo                                                 |
+| ------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `NODE_ENV`               | `development`, `test` o `production`                                      | `development`                                           |
+| `PORT`                   | Puerto de la API                                                          | `3000`                                                  |
+| `CORS_ORIGIN`            | Origen del frontend autorizado a llamar a la API                          | `http://localhost:5173`                                 |
+| `TRUST_PROXY`            | Proxies inversos delante de la API (`0` en desarrollo, `1` en producción) | `0`                                                     |
+| `DATABASE_URL`           | Conexión a PostgreSQL                                                     | `postgresql://gastos:gastos@localhost:5432/gastos`      |
+| `DATABASE_URL_TEST`      | Base usada por los tests                                                  | `postgresql://gastos:gastos@localhost:5432/gastos_test` |
+| `JWT_ACCESS_SECRET`      | Secreto para firmar el access token (mínimo 16 caracteres)                | valor largo y aleatorio                                 |
+| `JWT_ACCESS_TTL`         | Duración del access token (`15m`, `1h`, …)                                | `15m`                                                   |
+| `REFRESH_TOKEN_TTL_DAYS` | Días de vida del refresh token                                            | `7`                                                     |
+| `VITE_API_URL`           | URL de la API que usa el frontend                                         | `http://localhost:3000/api`                             |
 
 Para producción generá un secreto propio, por ejemplo con `openssl rand -base64 48`.
+
+## Despliegue
+
+La app se publica en una VM gratuita de Oracle Cloud con Docker Compose: Caddy sirve el frontend y hace de proxy HTTPS hacia la API, y PostgreSQL queda en la red interna. Web y API comparten dominio, y el frontend se compila con `VITE_API_URL=/api`.
+
+El paso a paso (cuenta, VM, puertos, dominio, respaldos y actualización) está en [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md). Los archivos viven en [`deploy/`](deploy/).
+
+Para probar el stack de producción en tu máquina:
+
+```bash
+cp deploy/.env.prod.example deploy/.env
+```
+
+Editá `deploy/.env` con `DOMAIN=localhost` y `CORS_ORIGIN=https://localhost`, y levantá todo:
+
+```bash
+docker compose -f deploy/docker-compose.prod.yml up -d --build
+```
+
+La app queda en https://localhost (el navegador avisa del certificado porque Caddy usa uno interno para `localhost`).
 
 ## API
 
@@ -141,4 +162,6 @@ Cada módulo de la API sigue la cadena `routes → controller → service → Pr
 ## Documentación
 
 - [Guía de desarrollo](docs/GUIA_FABLE.md): especificación, convenciones y plan por fases.
+- [Guía de despliegue](docs/GUIA_DESPLIEGUE_FABLE.md): especificación del despliegue en Oracle Cloud.
+- [Manual de despliegue](docs/DESPLIEGUE.md): paso a paso para publicar la app.
 - [Registro de decisiones](docs/decisiones.md): supuestos y decisiones tomadas durante el desarrollo.
